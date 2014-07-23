@@ -20,24 +20,35 @@ namespace Graphite
             _tcpClient = new TcpClient(Hostname, Port);
         }
 
+		public void Send(string path, double value, DateTime timeStamp){
+			var msg = new PlaintextMessage(GetPath(path), value,timeStamp);
+
+			Send(path,msg);
+		}
+
         public void Send(string path, int value, DateTime timeStamp)
         {
-            try
-            {
-                if (!string.IsNullOrWhiteSpace(KeyPrefix))
-                {
-                    path = KeyPrefix+ "." + path;
-                }
-                
-                var message = new PlaintextMessage(path, value, timeStamp).ToByteArray();
-
-                _tcpClient.GetStream().Write(message, 0, message.Length);
-            }
-            catch
-            {
-                // Supress all exceptions for now.
-            }
+			var msg = new PlaintextMessage(GetPath(path), value, timeStamp);
+			Send(path,msg);
         }
+
+		private string GetPath(string path) {
+			if(string.IsNullOrWhiteSpace(KeyPrefix)) {
+				return path;
+			}
+
+			return KeyPrefix+ "." + path;
+		}
+
+		private void Send(string path,PlaintextMessage msg) {
+			try {
+				var message = msg.ToByteArray();
+
+				_tcpClient.GetStream().Write(message,0,message.Length);
+			} catch {
+				// Supress all exceptions for now.
+			}
+		}
 
         #region IDisposable
 
